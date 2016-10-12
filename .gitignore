@@ -1,3 +1,6 @@
 build/
 deb/*.deb
 tests/*.converted
+archpkg/*
+!archpkg/PKGBUILD
+!archpkg/build.sh
