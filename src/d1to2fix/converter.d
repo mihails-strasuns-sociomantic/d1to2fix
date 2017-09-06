@@ -69,48 +69,16 @@ private struct Converter
             {
                 // Getting rid of mappings for already processed tokens to
                 // speed up further lookups
-                this.token_mappings.value_aggregates.removeUntil(token.index);
-                this.token_mappings.scope_delegates.removeUntil(token.index);
+                this.token_mappings.test_blocks.removeUntil(token.index);
             }
-
-            // convert all delegates into scope delegates to reduce GC allocations
-            // from uncalled closures
-            if (this.token_mappings.scope_delegates.contain(token.index))
-                output.write("scope ");
 
             switch (token.type)
             {
-                case tok!"const":
-                    // convert all manifest constants
-                    if (this.token_mappings.value_aggregates.contain(token.index))
-                        // special case for struct members where usage of static
-                        // immutable has proven impractical for existing
-                        // projects
-                        output.write("enum");
+                case tok!"assert":
+                    if (this.token_mappings.test_blocks.contain(token.index))
+                        output.write("test");
                     else
-                        output.write("static immutable");
-                    break;
-                case tok!"this":
-                    // convert all "this" mentions inside struct bodies to
-                    // pointers to match D1
-                    if (this.token_mappings.value_aggregates.contain(token.index))
-                        output.write("(&this)");
-                    else
-                        writeToken(token);
-                    break;
-                case tok!"comment":
-                    import std.regex;
-                    static inject_pattern = ctRegex!("/\\* d1to2fix_inject: (.+) \\*/");
-                    auto match = matchFirst(token.text, inject_pattern);
-                    if (match.empty)
-                        writeToken(token);
-                    else
-                    {
-                        if (allowed_tokens.canFind(match[1]))
-                            output.write(match[1]);
-                        else
-                            output.write("<unsupported token injection>");
-                    }
+                        output.write("assert");
                     break;
                 default:
                     writeToken(token);
